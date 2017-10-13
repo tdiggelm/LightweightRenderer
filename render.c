@@ -28,7 +28,7 @@
 #include <fstream>
 #include <IL/il.h>
 #include <libgen.h>
-#include <GL/glu.h>   
+#include <GL/glu.h>
 
 //to map image filenames to textureIds
 #include <map>
@@ -51,6 +51,7 @@ GLfloat        camx = 0.0, camy = 1.0, camz = -4.0;
 GLfloat        centerx = 0.0, centery = 0.0, centerz = 0.0;
 GLfloat        upx = 0.0, upy = 1.0, upz = 0.0;
 GLfloat        fovy = 45.0;
+GLfloat        anglex = 0, angley = 0, anglez = 0;
 
 GLfloat LightAmbient[]= { 0.1f, 0.1f, 0.1f, 1.0f };
 GLfloat LightDiffuse[]= { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -176,7 +177,7 @@ int LoadGLTextures(const aiScene * scene)
             texFound = scene->mMaterials[m]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
             if (texFound != AI_SUCCESS)
                 break;
-            
+
             char * filename_unix = replace(path.data, '\\', "/");
             textureIdMap[hash(filename_unix)] = NULL; //fill map with textures, pointers still NULL yet
             textureName[hash(filename_unix)] = filename_unix; //fill map with textures, pointers still NULL yet
@@ -220,7 +221,7 @@ int LoadGLTextures(const aiScene * scene)
 
         if (success) /* If no error occured: */
         {
-            // Convert every colour component into unsigned byte.If your image contains 
+            // Convert every colour component into unsigned byte.If your image contains
             // alpha channel you can replace IL_RGB with IL_RGBA
             success = ilConvertImage(IL_RGB, IL_UNSIGNED_BYTE);
             if (!success)
@@ -230,7 +231,7 @@ int LoadGLTextures(const aiScene * scene)
                 return -1;
             }
             // Binding of texture name
-            glBindTexture(GL_TEXTURE_2D, textureIds[i]); 
+            glBindTexture(GL_TEXTURE_2D, textureIds[i]);
             // redefine standard texture values
             // We will use linear interpolation for magnification filter
             glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
@@ -239,7 +240,7 @@ int LoadGLTextures(const aiScene * scene)
             // Texture specification
             glTexImage2D(GL_TEXTURE_2D, 0, ilGetInteger(IL_IMAGE_BPP), ilGetInteger(IL_IMAGE_WIDTH),
                     ilGetInteger(IL_IMAGE_HEIGHT), 0, ilGetInteger(IL_IMAGE_FORMAT), GL_UNSIGNED_BYTE,
-                    ilGetData()); 
+                    ilGetData());
             // we also want to be able to deal with odd texture dimensions
             glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
             glPixelStorei( GL_UNPACK_ROW_LENGTH, 0 );
@@ -253,7 +254,7 @@ int LoadGLTextures(const aiScene * scene)
         }
     }
     // Because we have already copied image data into texture data  we can release memory used by image.
-    ilDeleteImages(numTextures, imageIds); 
+    ilDeleteImages(numTextures, imageIds);
 
     // Cleanup
     delete [] imageIds;
@@ -385,7 +386,7 @@ void recursive_render(const struct aiScene * sc, const struct aiNode * nd, float
     {
         const struct aiMesh* mesh = scene->mMeshes[nd->mMeshes[n]];
 
-        apply_material(sc->mMaterials[mesh->mMaterialIndex]); 
+        apply_material(sc->mMaterials[mesh->mMaterialIndex]);
 
         if(mesh->mNormals == NULL)
         {
@@ -393,7 +394,7 @@ void recursive_render(const struct aiScene * sc, const struct aiNode * nd, float
         }
         else
         {
-            glEnable(GL_LIGHTING);            
+            glEnable(GL_LIGHTING);
         }
 
         if(mesh->mColors[0] != NULL)
@@ -424,23 +425,23 @@ void recursive_render(const struct aiScene * sc, const struct aiNode * nd, float
             glm::vec3 p0(mesh->mVertices[v0].x, mesh->mVertices[v0].y, mesh->mVertices[v0].z);
             glm::vec3 p1(mesh->mVertices[v1].x, mesh->mVertices[v1].y, mesh->mVertices[v1].z);
             glm::vec3 p2(mesh->mVertices[v2].x, mesh->mVertices[v2].y, mesh->mVertices[v2].z);
-            
+
             glm::vec3 res = glm::cross(p1-p0, p2-p0);
-            res = -glm::normalize(res);            
-            
+            res = -glm::normalize(res);
+
             for(i = 0; i < face->mNumIndices; i++)        // go through all vertices in face
             {
                 int vertexIndex = face->mIndices[i];    // get group index for current index
                 if(mesh->mColors[0] != NULL)
                     Color4f(&mesh->mColors[0][vertexIndex]);
-                if(mesh->mNormals != NULL) 
+                if(mesh->mNormals != NULL)
                     if(mesh->HasTextureCoords(0))        //HasTextureCoords(texture_coordinates_set)
                     {
                         glTexCoord2f(mesh->mTextureCoords[0][vertexIndex].x, 1 - mesh->mTextureCoords[0][vertexIndex].y); //mTextureCoords[channel][vertex]
                     }
 
-                glNormal3fv(&res[0]);            
-                // glColor3fv(&res[0]);            
+                glNormal3fv(&res[0]);
+                // glColor3fv(&res[0]);
                 glVertex3fv(&mesh->mVertices[vertexIndex].x);
             }
             glEnd();
@@ -486,11 +487,12 @@ int InitGL(int width, int height)
               upx, upy, upz);
 
     glMatrixMode(GL_MODELVIEW);                        // Select The Modelview Matrix
-    glLoadIdentity();       
+
+    glLoadIdentity();
 
     glEnable(GL_TEXTURE_2D);
     glShadeModel(GL_SMOOTH);         // Enables Smooth Shading
-    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClearDepth(1.0f);                // Depth Buffer Setup
     glEnable(GL_DEPTH_TEST);        // Enables Depth Testing
     glDepthFunc(GL_LEQUAL);            // The Type Of Depth Test To Do
@@ -498,50 +500,50 @@ int InitGL(int width, int height)
 
     glEnable(GL_LIGHTING);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-    
-    glEnable(GL_LIGHT0);    // Uses default lighting parameters        
+
+    glEnable(GL_LIGHT0);    // Uses default lighting parameters
     glLightfv(GL_LIGHT0, GL_AMBIENT, LightAmbient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, LightDiffuse);
     glLightfv(GL_LIGHT0, GL_POSITION, Light8Position);
     glEnable(GL_NORMALIZE);
-    
-    glEnable(GL_LIGHT1);    
+
+    glEnable(GL_LIGHT1);
     glLightfv(GL_LIGHT1, GL_AMBIENT, LightAmbient);
     glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuse);
     glLightfv(GL_LIGHT1, GL_POSITION, Light1Position);
-    
-    glEnable(GL_LIGHT2);    
+
+    glEnable(GL_LIGHT2);
     glLightfv(GL_LIGHT2, GL_AMBIENT, LightAmbient);
     glLightfv(GL_LIGHT2, GL_DIFFUSE, LightDiffuse);
     glLightfv(GL_LIGHT2, GL_POSITION, Light2Position);
-    
-    glEnable(GL_LIGHT3);    
+
+    glEnable(GL_LIGHT3);
     glLightfv(GL_LIGHT3, GL_AMBIENT, LightAmbient);
     glLightfv(GL_LIGHT3, GL_DIFFUSE, LightDiffuse);
     glLightfv(GL_LIGHT3, GL_POSITION, Light3Position);
-    
+
     /*
-    glEnable(GL_LIGHT4);    
+    glEnable(GL_LIGHT4);
     glLightfv(GL_LIGHT4, GL_AMBIENT, LightAmbient);
     glLightfv(GL_LIGHT4, GL_DIFFUSE, LightDiffuse);
     glLightfv(GL_LIGHT4, GL_POSITION, Light4Position);
-    
-    glEnable(GL_LIGHT5);    
+
+    glEnable(GL_LIGHT5);
     glLightfv(GL_LIGHT5, GL_AMBIENT, LightAmbient);
     glLightfv(GL_LIGHT5, GL_DIFFUSE, LightDiffuse);
     glLightfv(GL_LIGHT5, GL_POSITION, Light5Position);
-    
-    glEnable(GL_LIGHT6);    
+
+    glEnable(GL_LIGHT6);
     glLightfv(GL_LIGHT6, GL_AMBIENT, LightAmbient);
     glLightfv(GL_LIGHT6, GL_DIFFUSE, LightDiffuse);
     glLightfv(GL_LIGHT6, GL_POSITION, Light6Position);
-    
-    glEnable(GL_LIGHT7);    
+
+    glEnable(GL_LIGHT7);
     glLightfv(GL_LIGHT7, GL_AMBIENT, LightAmbient);
     glLightfv(GL_LIGHT7, GL_DIFFUSE, LightDiffuse);
-    glLightfv(GL_LIGHT7, GL_POSITION, Light7Position); 
+    glLightfv(GL_LIGHT7, GL_POSITION, Light7Position);
     */
-    
+
 
     return true;                    // Initialization Went OK
 }
@@ -554,7 +556,18 @@ render_image(void)
     // glLoadIdentity();                // Reset MV Matrix
     // glTranslatef(0.0f, 0.0f, -camDist);    // Move 40 Units And Into The Screen
 
+    printf("rotate %0.1f degrees about x-axis\n", anglex);
+    printf("rotate %0.1f degrees about y-axis\n", angley);
+    printf("rotate %0.1f degrees about z-axis\n", anglez);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glRotatef(anglex, 1, 0, 0);
+    glRotatef(angley, 0, 1, 0);
+    glRotatef(anglez, 0, 0, 1);
+
     drawAiScene(scene);
+    glPopMatrix();
 
     /* This is very important!!!
      * Make sure buffered commands are finished!!!
@@ -572,7 +585,7 @@ main(int argc, char *argv[])
         fprintf(stderr, "Usage:\n");
         fprintf(stderr, "  render modelname pngname [width height] [camx camy camz] [centerx centerz centerz] [upx upy upz] [fovy]\n");
         fprintf(stderr, "Default: width=%d height=%d cam=[%0.4f %0.4f %0.4f] center=[%0.4f %0.4f %0.4f] up=[%0.4f %0.4f %0.4f] fovy=%0.4f\n", Width, Height, camx, camy, camz, centerx, centery, centerz, upx, upy, upz, fovy);
-        return 0;
+        return EXIT_FAILURE;
     }
 
     modelname = argv[1];
@@ -584,31 +597,37 @@ main(int argc, char *argv[])
     }
 
     if (argc >= 8) {
-        camx = atoi(argv[5]);
-        camy = atoi(argv[6]);
-        camz = atoi(argv[7]);
+        camx = atof(argv[5]);
+        camy = atof(argv[6]);
+        camz = atof(argv[7]);
     }
 
     if (argc >= 11) {
-        centerx = atoi(argv[8]);
-        centery = atoi(argv[9]);
-        centerz = atoi(argv[10]);
+        centerx = atof(argv[8]);
+        centery = atof(argv[9]);
+        centerz = atof(argv[10]);
     }
 
     if (argc >= 14) {
-        upx = atoi(argv[11]);
-        upy = atoi(argv[12]);
-        upz = atoi(argv[13]);
+        upx = atof(argv[11]);
+        upy = atof(argv[12]);
+        upz = atof(argv[13]);
     }
-        
+
     if (argc >= 15) {
         fovy = atoi(argv[14]);
     }
 
+    if (argc >= 16) {
+        anglex = atoi(argv[15]);
+        angley = atoi(argv[16]);
+        anglez = atoi(argv[17]);
+    }
+
     if (!Import3DFromFile(modelname)) {
         fprintf(stderr, "model cannot be loaded!\n");
-        return 0;
-    }    
+        return EXIT_FAILURE;
+    }
 
     /* Create an RGBA-mode context */
 #if OSMESA_MAJOR_VERSION * 100 + OSMESA_MINOR_VERSION >= 305
@@ -619,20 +638,20 @@ main(int argc, char *argv[])
 #endif
     if (!ctx) {
         printf("OSMesaCreateContext failed!\n");
-        return 0;
+        return EXIT_FAILURE;
     }
 
     /* Allocate the image buffer */
     buffer = malloc( Width * Height * 4 * sizeof(GLubyte) );
     if (!buffer) {
         printf("Alloc image buffer failed!\n");
-        return 0;
+        return EXIT_FAILURE;
     }
 
     /* Bind the buffer to the context and make it current */
     if (!OSMesaMakeCurrent( ctx, buffer, GL_UNSIGNED_BYTE, Width, Height )) {
         printf("OSMesaMakeCurrent failed!\n");
-        return 0;
+        return EXIT_FAILURE;
     }
 
     {
@@ -644,6 +663,7 @@ main(int argc, char *argv[])
     }
 
     InitGL(Width, Height);
+
     render_image();
 
     if (pngname != NULL) {
@@ -685,5 +705,5 @@ main(int argc, char *argv[])
     /* destroy the context */
     OSMesaDestroyContext( ctx );
 
-    return 0;
+    return EXIT_SUCCESS;
 }

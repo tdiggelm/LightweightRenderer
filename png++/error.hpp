@@ -105,7 +105,8 @@ namespace png
             return std::string(buf);
 #else
             /* GNU variant can return a pointer to static buffer instead of buf */
-            return std::string(strerror_r(errnum, buf, ERRBUF_SIZE));
+            //return std::string(strerror_r(errnum, buf, ERRBUF_SIZE));
+            return std::string("ERROR");
 #endif
 #endif
 
